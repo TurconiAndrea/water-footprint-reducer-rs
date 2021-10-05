@@ -1,6 +1,6 @@
 import json
 
-config_path = "config.json"
+config_path = "configuration/config.json"
 path_orders = "reviews.pkl"
 path_recipes = "recipes.pkl"
 path_cf_model = "model.pkl"
