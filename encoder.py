@@ -99,7 +99,7 @@ class Encoder:
         tqdm.pandas()
         df = pd.read_csv(self.input_path_recipes)
         df = df.rename(columns={v: k for k, v in columns_map.items()})
-        #df = df[["id", "name", "ingredients", "quantity"]]
+        # df = df[["id", "name", "ingredients", "quantity"]]
         df = df[["id", "name", "ingredients"]]
         df["ingredients"] = df["ingredients"].apply(self.__process_ingredients)
         # df["quantity"] = df["quantity"].apply(

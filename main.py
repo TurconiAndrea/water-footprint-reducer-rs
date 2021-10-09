@@ -1,7 +1,7 @@
 import argparse
 
 from configuration import load_configuration
-from recommender import Recommender
+from cb_recommender import CB_Recommender
 from encoder import Encoder
 
 
@@ -41,9 +41,9 @@ if __name__ == "__main__":
             config["orders_map"], config["recipes_map"], bool(config["rating"])
         )
 
-    wf_recommender = Recommender(filter_wf=args.filter_wf)
+    wf_recommender = CB_Recommender(filter_wf=args.filter_wf)
     recommendations = wf_recommender.get_user_recommendations(args.user_id)
     print("--- RSWF: a Recommender System for reducing Water Footprint ---")
     print(f"--- Recommendation for user with id {args.user_id} ---")
-    #print(f"--- Total wf: {recommendations['wf'].sum()}")
+    # print(f"--- Total wf: {recommendations['wf'].sum()}")
     print(recommendations)
