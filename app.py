@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from configuration import load_configuration
-from cb_recommender import CB_Recommender
+from cb_recommender import CBRecommender
 
 
 class App:
@@ -26,7 +26,7 @@ class App:
         ]
 
     def recommend_recipes(self, user_id, n_recommendations, filter_wf):
-        wf_recommender = CB_Recommender(
+        wf_recommender = CBRecommender(
             n_recommendations=n_recommendations, filter_wf=not filter_wf
         )
         return wf_recommender.get_user_recommendations(user_id)

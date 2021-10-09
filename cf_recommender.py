@@ -12,13 +12,12 @@ from surprise import (
     BaselineOnly,
     KNNWithMeans,
     CoClustering,
-    prediction_algorithms,
 )
 from surprise.model_selection import train_test_split, cross_validate
 from tqdm import tqdm
 
 
-class CF_Recommender:
+class CFRecommender:
     def __init__(self, orders=None, recipes=None):
         config = load_configuration()
         self.orders = (

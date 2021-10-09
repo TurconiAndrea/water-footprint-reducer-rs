@@ -10,7 +10,7 @@ path_recipes = "data/recipes.pkl"
 path_embedding = "data/ingredients.pkl"
 
 
-class CB_Recommender:
+class CBRecommender:
     def __init__(
         self,
         orders=None,

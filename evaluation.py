@@ -3,8 +3,8 @@ import joblib
 import pandas as pd
 
 from configuration import load_configuration
-from cb_recommender import CB_Recommender
-from cf_recommender import CF_Recommender
+from cb_recommender import CBRecommender
+from cf_recommender import CFRecommender
 from sklearn.feature_extraction.text import TfidfVectorizer
 from stop_words import get_stop_words
 from tqdm import tqdm
@@ -49,7 +49,7 @@ class Evaluation:
         hit = 0
         for user in tqdm(users):
             orders, recipes, matrix, test = self.__get_user_data(user)
-            recommeder = CB_Recommender(
+            recommeder = CBRecommender(
                 n_recommendations=10,
                 orders=orders,
                 recipes=recipes,
@@ -69,7 +69,7 @@ class Evaluation:
         hit = 0
         for user in tqdm(users):
             orders, recipes, test = self.__get_cf_user_data(user)
-            recommeder = CF_Recommender(
+            recommeder = CFRecommender(
                 orders=orders,
                 recipes=recipes
             )
