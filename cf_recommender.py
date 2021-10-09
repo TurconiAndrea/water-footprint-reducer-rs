@@ -94,7 +94,7 @@ class CFRecommender:
 
 
 if __name__ == "__main__":
-    rec = CF_Recommender()
+    rec = CFRecommender()
     # model = rec.create_cf_model()
     # res = rec.save_cf_model(model)
     # print(">> Model saved successfully <<") if res else print(">> Error while saving the model <<")
