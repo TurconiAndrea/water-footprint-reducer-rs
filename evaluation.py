@@ -1,13 +1,14 @@
 from json import load
+
 import joblib
 import pandas as pd
-
-from configuration import load_configuration
-from cb_recommender import CBRecommender
-from cf_recommender import CFRecommender
 from sklearn.feature_extraction.text import TfidfVectorizer
 from stop_words import get_stop_words
 from tqdm import tqdm
+
+from cb_recommender import CBRecommender
+from cf_recommender import CFRecommender
+from configuration import load_configuration
 
 
 class Evaluation:
@@ -63,19 +64,18 @@ class Evaluation:
             hit = hit + 1 if test in recommendations["id"].unique() else hit + 0
         print(f"Hit: {hit}, Users: {len(users)}")
         return hit / len(users)
-    
+
     def get_cf_hit_ratio_score(self):
         users = pd.read_pickle(self.path_orders)["user_id"].unique()
         hit = 0
         for user in tqdm(users):
             orders, recipes, test = self.__get_cf_user_data(user)
-            recommeder = CFRecommender(
-                orders=orders,
-                recipes=recipes
-            )
+            recommeder = CFRecommender(orders=orders, recipes=recipes)
             model = recommeder.create_cf_model()
-            recommendations = recommeder.get_user_recommendations(user, n=-1, model=model)
-            #hit = hit + 1 if test in recommendations["id"].unique() else hit + 0
+            recommendations = recommeder.get_user_recommendations(
+                user, n=-1, model=model
+            )
+            # hit = hit + 1 if test in recommendations["id"].unique() else hit + 0
             print(recommendations)
             break
         print(f"Hit: {hit}, Users: {len(users)}")

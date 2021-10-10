@@ -1,8 +1,12 @@
 import pandas as pd
 import streamlit as st
 
-from configuration import load_configuration
 from cb_recommender import CBRecommender
+from cf_recommender import CFRecommender
+from configuration import load_configuration
+
+content_bases_algo = "Content Based"
+collaborative_filtering_algo = "Collaborative filtering"
 
 
 class App:
@@ -25,10 +29,16 @@ class App:
             ["name", "rating", "wf", "category"]
         ]
 
-    def recommend_recipes(self, user_id, n_recommendations, filter_wf):
-        wf_recommender = CBRecommender(
-            n_recommendations=n_recommendations, filter_wf=not filter_wf
-        )
+    def get_recipe_recommendations(self, user_id, n_recommendations, filter_wf, algo_type):
+        wf_recommenders = {
+            content_bases_algo: CBRecommender(
+                n_recommendations=n_recommendations, filter_wf=not filter_wf
+            ),
+            collaborative_filtering_algo: CFRecommender(
+                n_recommendations=n_recommendations, disable_filter_wf=not filter_wf
+            )
+        }
+        wf_recommender = wf_recommenders[algo_type]
         return wf_recommender.get_user_recommendations(user_id)
 
     def build_app(self):
@@ -40,6 +50,11 @@ class App:
         st.sidebar.write("### Configure the system")
         user_id = st.sidebar.selectbox(
             "Select a user", orders["user_id"].unique(), index=0
+        )
+        algo_type = st.sidebar.selectbox(
+            "Select the algorithm for recommendation",
+            [content_bases_algo, collaborative_filtering_algo],
+            index=0,
         )
         n_recommendations = st.sidebar.slider(
             "Select number of recommendations",
@@ -60,16 +75,16 @@ class App:
         st.dataframe(self.generate_user_orders(user_id, orders, recipes))
 
         if st.button("Recommend recipes!"):
-            with st.spinner(text="Generating recoomendations"):
+            with st.spinner(text="Generating recommendations"):
                 st.markdown("### Recommendations for user to lower the Water Footprint")
-                recommendations = self.recommend_recipes(
-                    user_id, n_recommendations, filter_wf
+                recommendations = self.get_recipe_recommendations(
+                    user_id, n_recommendations, filter_wf, algo_type
                 )[["name", "wf", "category"]].reset_index(drop=True)
                 st.write(
                     "Total Water footprint of recommendations:",
                     round(recommendations["wf"].sum(), 2),
                 )
-                st.write(recommendations)
+                st.dataframe(recommendations)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
-import pandas as pd
 import joblib
+import pandas as pd
+from recipe_tagger import recipe_waterfootprint as wf
+from recipe_tagger import util
+from sklearn.feature_extraction.text import TfidfVectorizer
+from stop_words import get_stop_words
+from tqdm import tqdm
 
 from configuration import load_configuration
-from recipe_tagger import util
-from recipe_tagger import recipe_waterfootprint as wf
-from stop_words import get_stop_words
-from sklearn.feature_extraction.text import TfidfVectorizer
-from tqdm import tqdm
 
 
 class Encoder:

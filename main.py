@@ -1,9 +1,8 @@
 import argparse
 
-from configuration import load_configuration
 from cb_recommender import CBRecommender
+from configuration import load_configuration
 from encoder import Encoder
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

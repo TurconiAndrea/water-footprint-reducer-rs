@@ -1,24 +1,33 @@
-import pandas as pd
-import joblib
-
 from collections import defaultdict
-from configuration import load_configuration
+
+import joblib
+import pandas as pd
 from surprise import (
-    Dataset,
-    Reader,
     SVD,
-    SVDpp,
-    SlopeOne,
     BaselineOnly,
-    KNNWithMeans,
     CoClustering,
+    Dataset,
+    KNNWithMeans,
+    KNNBaseline,
+    Reader,
+    SlopeOne,
+    SVDpp,
+    accuracy,
 )
-from surprise.model_selection import train_test_split, cross_validate
+from surprise.model_selection import cross_validate, train_test_split
 from tqdm import tqdm
+
+from configuration import load_configuration
 
 
 class CFRecommender:
-    def __init__(self, orders=None, recipes=None):
+    def __init__(
+        self,
+        orders=None,
+        recipes=None,
+        n_recommendations=10,
+        disable_filter_wf=False
+    ):
         config = load_configuration()
         self.orders = (
             orders if orders is not None else pd.read_pickle(config["path_orders"])
@@ -33,12 +42,13 @@ class CFRecommender:
         benchmark = []
         data = Dataset.load_from_df(self.orders, self.reader)
         algorithms = [
-            BaselineOnly(),
-            SVD(),
-            SVDpp(),
+            BaselineOnly(verbose=False),
+            SVD(verbose=False),
+            SVDpp(verbose=False),
             SlopeOne(),
-            KNNWithMeans(),
-            CoClustering(),
+            KNNWithMeans(verbose=False),
+            KNNBaseline(verbose=False),
+            CoClustering(verbose=False),
         ]
         for algorithm in tqdm(algorithms, desc="Computing benchmark"):
             results = cross_validate(
@@ -54,8 +64,14 @@ class CFRecommender:
         print(pd.DataFrame(benchmark).set_index("Algorithm").sort_values("test_rmse"))
 
     def get_algorithm(self):
-        # return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False)
-        return SVD(verbose=False, n_epochs=10)
+        # CURRENT BEST: KNN BASELINE
+        # return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False) # similar with both
+        sim_options = {"name": "msd", "min_support": 5, "user_based": False}
+        return KNNBaseline(
+            k=30, sim_options=sim_options, verbose=False
+        )  # lower with planeat, lower with food.com
+        # return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
+        # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)  #raise with planeat, lower with food.com
 
     def save_cf_model(self, model):
         print(">> Saving the model <<")
@@ -88,15 +104,26 @@ class CFRecommender:
     def get_user_recommendations(self, user_id, n=10, model=None):
         model = model if model is not None else self.load_cf_model()
         recommendations = self.get_all_users_top_n(model, n=n)[user_id]
-        #print(f">> Top 10 recommendations for user {user_id}:")
-        data = [self.get_recipe_from_id(id) for id, _ in recommendations if id]
-        print(data)
+        # print(f">> Top 10 recommendations for user {user_id}:")
+        return pd.DataFrame(
+            self.get_recipe_from_id(id) for id, _ in recommendations if id
+        )
+
+    def accuracy_model(self):
+        model = self.get_algorithm()
+        data = Dataset.load_from_df(self.orders, self.reader)
+        trainset, testset = train_test_split(data, test_size=0.25)
+        model.fit(trainset)
+        predictions = model.test(testset)
+        accuracy.rmse(predictions)
 
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    # model = rec.create_cf_model()
-    # res = rec.save_cf_model(model)
-    # print(">> Model saved successfully <<") if res else print(">> Error while saving the model <<")
+    model = rec.create_cf_model()
+    res = rec.save_cf_model(model)
+    print(">> Model saved successfully <<") if res else print(
+        ">> Error while saving the model <<"
+    )
     recommendations = rec.get_user_recommendations(4)
     print(recommendations)

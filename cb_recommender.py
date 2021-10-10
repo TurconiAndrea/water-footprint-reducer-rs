@@ -1,9 +1,9 @@
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
 
 from configuration import load_configuration
-from sklearn.metrics.pairwise import cosine_similarity
 
 path_orders = "data/reviews.pkl"
 path_recipes = "data/recipes.pkl"
