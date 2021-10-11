@@ -15,11 +15,12 @@ from surprise import (
     SVDpp,
     accuracy,
 )
-from surprise.model_selection import cross_validate, train_test_split
+from surprise.model_selection import cross_validate
 from tqdm import tqdm
 
 from configuration import load_configuration
 from water_footprint_utils import WaterFootprintUtils
+
 
 class CFRecommender:
     """
@@ -33,7 +34,7 @@ class CFRecommender:
     :param orders: the dataset containing the user reviews.
     :param recipes: the dataset containing the recipes.
     :param n_recommendations: the number of recommendations to be returned.
-    :param disable_filter_wf: a bool representing the possibility to \
+    :param disable_filter_wf: a bool representing the possibility to
         turn off water footprint search.
     """
     def __init__(
@@ -45,8 +46,8 @@ class CFRecommender:
     ):
         """
         Constructor method for the class.
-        If param orders is not indicated it will be taken the default one from config.
-        If param recipes is not indicated it will be taken the default one from config.
+        If param orders is not provided it will be taken the default one from config.
+        If param recipes is not provided it will be taken the default one from config.
         """
         config = load_configuration()
         self.orders = (
