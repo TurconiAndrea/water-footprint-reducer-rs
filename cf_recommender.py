@@ -19,7 +19,7 @@ from surprise.model_selection import cross_validate, train_test_split
 from tqdm import tqdm
 
 from configuration import load_configuration
-
+from water_footprint_utils import WaterFootprintUtils
 
 class CFRecommender:
     """
@@ -138,7 +138,7 @@ class CFRecommender:
         return KNNBaseline(
             k=30, sim_options=sim_options, verbose=False
         )  # lower with planeat, lower with food.com
-        # return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
+        #return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
         # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)  #raise with planeat, lower with food.com
 
     def create_cf_model(self):
@@ -151,7 +151,8 @@ class CFRecommender:
         """
         print(">> Creating the model <<")
         data = self.get_data()
-        train, test = train_test_split(data, test_size=0.25)
+        train = data.build_full_trainset()
+        test = train.build_anti_testset()
         algo = self.get_algorithm()
         return algo.fit(train).test(test)
 
@@ -197,28 +198,30 @@ class CFRecommender:
     def get_user_recommendations(self, user_id, model=None):
         """
         Get the best n recommendations for the provided user id.
+        If the water footprint is not disable it filter the best
+        recommendations in order to lower to user water consumptions.
 
         :param user_id: the id of the user that needs recommendations.
         :param model: the model of the recommendations. Default is None.
-
         :return: a dataframe containing the recommendations for the user.
         """
+        wf = WaterFootprintUtils()
         model = model if model is not None else self.load_cf_model()
-        n_recommendations = self.n_recommendations if self.disable_filter_wf else -1
-        top_recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[user_id]
-        # print(f">> Top {self.n_recommendations} recommendations for user {user_id}:")
+        n_recommendations = -1 if not self.disable_filter_wf else self.n_recommendations
+        recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[user_id]
+        recommendations = [recipe_id for recipe_id, _ in recommendations]
+        recommendations = (
+            wf.get_recommendations_correct(recommendations, user_id, "cf")
+            if not self.disable_filter_wf
+            else recommendations
+        )
         return pd.concat(
-            [self.__get_recipe_from_id(recipe_id) for recipe_id, rating in top_recommendations]
+            [self.__get_recipe_from_id(recipe_id) for recipe_id in recommendations]
         ).head(self.n_recommendations)
 
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    #model = rec.create_cf_model()
-    #res = rec.save_cf_model(model)
-    #print(">> Model saved successfully <<") if res else print(
-    #    ">> Error while saving the model <<"
-    #)
-    #recommendations = rec.get_user_recommendations(4)
-    #print(recommendations)
+    m = rec.create_cf_model()
+    rec.save_cf_model(m)
 
