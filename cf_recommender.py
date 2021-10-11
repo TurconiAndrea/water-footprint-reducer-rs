@@ -187,7 +187,7 @@ class CFRecommender:
         model = model if model is not None else self.load_cf_model()
         top_recommendations = self.get_all_users_top_n(model, self.n_recommendations)[user_id]
         # print(f">> Top 10 recommendations for user {user_id}:")
-        return pd.concat([self.get_recipe_from_index(recipe_id) for recipe_id, rating in top_recommendations])
+        return pd.concat([self.get_recipe_from_id(recipe_id) for recipe_id, rating in top_recommendations])
 
 
 if __name__ == "__main__":
