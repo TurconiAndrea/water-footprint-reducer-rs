@@ -22,6 +22,20 @@ from configuration import load_configuration
 
 
 class CFRecommender:
+    """
+    Class that represents the collaborative filtering algorithm.
+    The dataset are the ones provided onto the configuration file.
+    The algorithm used is a KNN Baseline from Surprise toolkit
+    fine tuned with different parameters.
+    This class also provides a benchmark that compares 7 different
+    algorithms and an evaluation method for the chosen algorithm.
+
+    :param orders: the dataset containing the user reviews.
+    :param recipes: the dataset containing the recipes.
+    :param n_recommendations: the number of recommendations to be returned.
+    :param disable_filter_wf: a bool representing the possibility to \
+        turn off water footprint search.
+    """
     def __init__(
         self,
         orders=None,
@@ -29,6 +43,11 @@ class CFRecommender:
         n_recommendations=10,
         disable_filter_wf=False
     ):
+        """
+        Constructor method for the class.
+        If param orders is not indicated it will be taken the default one from config.
+        If param recipes is not indicated it will be taken the default one from config.
+        """
         config = load_configuration()
         self.orders = (
             orders if orders is not None else pd.read_pickle(config["path_orders"])
@@ -147,7 +166,7 @@ class CFRecommender:
         algo = self.create_cf_model()
         return accuracy.rmse(algo, verbose=False)
 
-    def get_all_users_top_n(self, predictions, n=10):
+    def __get_all_users_top_n(self, predictions, n=10):
         """
         Return the top-N recommendation for each user from a set of predictions.
         If the n param is negative, all the recommendation are returned.
@@ -166,7 +185,7 @@ class CFRecommender:
             top_n[uid] = user_ratings[:n] if n >= 0 else user_ratings
         return top_n
 
-    def get_recipe_from_id(self, recipe_id):
+    def __get_recipe_from_id(self, recipe_id):
         """
         Return the recipe row from the dataframe based on the recipe id.
 
@@ -185,9 +204,12 @@ class CFRecommender:
         :return: a dataframe containing the recommendations for the user.
         """
         model = model if model is not None else self.load_cf_model()
-        top_recommendations = self.get_all_users_top_n(model, self.n_recommendations)[user_id]
-        # print(f">> Top 10 recommendations for user {user_id}:")
-        return pd.concat([self.get_recipe_from_id(recipe_id) for recipe_id, rating in top_recommendations])
+        n_recommendations = self.n_recommendations if self.disable_filter_wf else -1
+        top_recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[user_id]
+        # print(f">> Top {self.n_recommendations} recommendations for user {user_id}:")
+        return pd.concat(
+            [self.__get_recipe_from_id(recipe_id) for recipe_id, rating in top_recommendations]
+        ).head(self.n_recommendations)
 
 
 if __name__ == "__main__":
