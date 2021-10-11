@@ -148,6 +148,16 @@ class CFRecommender:
         return accuracy.rmse(algo, verbose=False)
 
     def get_all_users_top_n(self, predictions, n=10):
+        """
+        Return the top-N recommendation for each user from a set of predictions.
+        If the n param is negative, all the recommendation are returned.
+
+        :param predictions: the list of predictions, as returned by the test
+        method of an algorithm.
+        :param n: the number of recommendation to output for each user. Default is 10.
+        :return: a dict where keys are user ids and values are lists of tuples:
+        [(raw item id, rating estimation), ...] of size n.
+        """
         top_n = defaultdict(list)
         for uid, iid, true_r, est, _ in predictions:
             top_n[uid].append((iid, est))
@@ -157,26 +167,36 @@ class CFRecommender:
         return top_n
 
     def get_recipe_from_id(self, recipe_id):
-        return self.recipes.loc[recipe_id]
+        """
+        Return the recipe row from the dataframe based on the recipe id.
 
-    def get_user_recommendations(self, user_id, n=10, model=None):
+        :param recipe_id: the id of the recipe.
+        :return: a dataframe row containing the recipe at the provided id.
+        """
+        return self.recipes.query(f"id == {recipe_id}")[['name', 'wf', 'category']]
+
+    def get_user_recommendations(self, user_id, model=None):
+        """
+        Get the best n recommendations for the provided user id.
+
+        :param user_id: the id of the user that needs recommendations.
+        :param model: the model of the recommendations. Default is None.
+
+        :return: a dataframe containing the recommendations for the user.
+        """
         model = model if model is not None else self.load_cf_model()
-        recommendations = self.get_all_users_top_n(model, n=n)[user_id]
+        top_recommendations = self.get_all_users_top_n(model, self.n_recommendations)[user_id]
         # print(f">> Top 10 recommendations for user {user_id}:")
-        return pd.DataFrame(
-            self.get_recipe_from_id(id) for id, _ in recommendations if id
-        )
-
-
+        return pd.concat([self.get_recipe_from_index(recipe_id) for recipe_id, rating in top_recommendations])
 
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    model = rec.create_cf_model()
-    res = rec.save_cf_model(model)
-    print(">> Model saved successfully <<") if res else print(
-        ">> Error while saving the model <<"
-    )
-    recommendations = rec.get_user_recommendations(4)
-    print(recommendations)
+    #model = rec.create_cf_model()
+    #res = rec.save_cf_model(model)
+    #print(">> Model saved successfully <<") if res else print(
+    #    ">> Error while saving the model <<"
+    #)
+    #recommendations = rec.get_user_recommendations(4)
+    #print(recommendations)
 
