@@ -29,14 +29,16 @@ class App:
             ["name", "rating", "wf", "category"]
         ]
 
-    def get_recipe_recommendations(self, user_id, n_recommendations, filter_wf, algo_type):
+    def get_recipe_recommendations(
+        self, user_id, n_recommendations, filter_wf, algo_type
+    ):
         wf_recommenders = {
             content_bases_algo: CBRecommender(
                 n_recommendations=n_recommendations, filter_wf=not filter_wf
             ),
             collaborative_filtering_algo: CFRecommender(
                 n_recommendations=n_recommendations, disable_filter_wf=not filter_wf
-            )
+            ),
         }
         wf_recommender = wf_recommenders[algo_type]
         return wf_recommender.get_user_recommendations(user_id)

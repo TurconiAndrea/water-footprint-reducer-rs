@@ -24,6 +24,7 @@ class CBRecommender:
     :param disable_filter_wf: a bool representing the possibility to
         turn off water footprint search.
     """
+
     def __init__(
         self,
         orders=None,

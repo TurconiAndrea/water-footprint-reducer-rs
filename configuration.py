@@ -10,6 +10,20 @@ input_path_orders = "orders.csv"
 
 
 def load_configuration():
+    """
+    Load the configuration file and all the settings
+    in order to run the app and the models.
+    Settings are loaded from the configuration file
+    called 'config.json' and located in the
+    configuration folder. Settings are the presence or
+    not of rating in the dataset, the path of orders,
+    recipes, embedding, input data and model.
+    Other settings are the mapping of the
+    dataset columns for both dataset.
+
+    :return: a dictionary containing all the
+        setting for the configuration of the app.
+    """
     with open(config_path) as f:
         data = json.load(f)
     folder = data["data_folder"]

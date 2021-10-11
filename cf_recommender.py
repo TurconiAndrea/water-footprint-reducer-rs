@@ -37,12 +37,9 @@ class CFRecommender:
     :param disable_filter_wf: a bool representing the possibility to
         turn off water footprint search.
     """
+
     def __init__(
-        self,
-        orders=None,
-        recipes=None,
-        n_recommendations=10,
-        disable_filter_wf=False
+        self, orders=None, recipes=None, n_recommendations=10, disable_filter_wf=False
     ):
         """
         Constructor method for the class.
@@ -139,7 +136,7 @@ class CFRecommender:
         return KNNBaseline(
             k=30, sim_options=sim_options, verbose=False
         )  # lower with planeat, lower with food.com
-        #return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
+        # return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
         # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)  #raise with planeat, lower with food.com
 
     def create_cf_model(self):
@@ -194,7 +191,7 @@ class CFRecommender:
         :param recipe_id: the id of the recipe.
         :return: a dataframe row containing the recipe at the provided id.
         """
-        return self.recipes.query(f"id == {recipe_id}")[['name', 'wf', 'category']]
+        return self.recipes.query(f"id == {recipe_id}")[["name", "wf", "category"]]
 
     def get_user_recommendations(self, user_id, model=None):
         """
@@ -209,7 +206,9 @@ class CFRecommender:
         wf = WaterFootprintUtils()
         model = model if model is not None else self.load_cf_model()
         n_recommendations = -1 if not self.disable_filter_wf else self.n_recommendations
-        recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[user_id]
+        recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[
+            user_id
+        ]
         recommendations = [recipe_id for recipe_id, _ in recommendations]
         recommendations = (
             wf.get_recommendations_correct(recommendations, user_id, "cf")
@@ -225,4 +224,3 @@ if __name__ == "__main__":
     rec = CFRecommender()
     m = rec.create_cf_model()
     rec.save_cf_model(m)
-

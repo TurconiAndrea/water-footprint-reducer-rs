@@ -11,6 +11,7 @@ class WaterFootprintUtils:
     It also provides a method for reducing the given
     recommendations for the user.
     """
+
     def __init__(self):
         config = load_configuration()
         self.orders = pd.read_pickle(config["path_orders"])
@@ -102,16 +103,20 @@ class WaterFootprintUtils:
         """
         user_score = self.__get_user_score(user_id)
         class_to_rec = self.__get_recipe_class_to_recommend(user_score)
-        return [
-            rec
-            for rec in recommendations
-            if self.recipes["category"][rec] in class_to_rec
-        ] if algo_type == "cb" else [
-            recipe_id
-            for recipe_id in recommendations
-            #if self.recipes.query(f"id == {recipe_id}")["category"].tolist()[0] in class_to_rec
-            if self.__get_recipe_category(recipe_id) in class_to_rec
-        ]
+        return (
+            [
+                rec
+                for rec in recommendations
+                if self.recipes["category"][rec] in class_to_rec
+            ]
+            if algo_type == "cb"
+            else [
+                recipe_id
+                for recipe_id in recommendations
+                # if self.recipes.query(f"id == {recipe_id}")["category"].tolist()[0] in class_to_rec
+                if self.__get_recipe_category(recipe_id) in class_to_rec
+            ]
+        )
 
 
 if __name__ == "__main__":
