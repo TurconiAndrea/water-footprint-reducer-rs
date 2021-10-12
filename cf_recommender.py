@@ -103,7 +103,9 @@ class CFRecommender:
             )
             benchmark.append(tmp)
 
-        results = pd.DataFrame(benchmark).set_index("Algorithm").sort_values("test_rmse")
+        results = (
+            pd.DataFrame(benchmark).set_index("Algorithm").sort_values("test_rmse")
+        )
         if verbose:
             print(results)
         return results

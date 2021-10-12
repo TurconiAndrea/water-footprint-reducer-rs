@@ -1,3 +1,8 @@
+"""
+Module containing the core of the configuration for
+the recommender system.
+"""
+
 import json
 
 config_path = "configuration/config.json"

@@ -1,3 +1,8 @@
+"""
+Module containing all the utilities to compute and integrate the
+recipe water footprint into the recommender system.
+"""
+
 import pandas as pd
 
 from configuration import load_configuration

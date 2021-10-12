@@ -23,6 +23,7 @@ class Encoder:
 
     :param language: the language of the dataset.
     """
+
     def __init__(self, language):
         """
         Constructor method for the class.
@@ -141,7 +142,7 @@ class Encoder:
 
     def __generate_orders(
         self,
-        columns_map={"user_id": "user_id", "item_id": "item_id", "rating": "rating"},
+        columns_map,
         rating=True,
     ):
         """
@@ -166,44 +167,63 @@ class Encoder:
         df = df.rename(columns={"item_id": "id"})
         df.to_pickle(self.path_orders)
 
-    def __generate_recipes_wf_category(
-        self,
-        columns_map={
-            "id": "id",
-            "name": "name",
-            "ingredients": "ingredients",
-            "quantity": "ingredients_quantity",
-        },
-    ):
+    def __generate_recipes_wf_category(self, columns_map):
+        """
+        Generate and save to pickle file the new recipes dataset, with
+        formatted ingredients and quantities, with every water footprint
+        and category of single recipes,
+
+        :param columns_map: a dictionary containing the mapping of the
+            column in the input dataset.
+        :return: None
+        """
+        if columns_map is None:
+            columns_map = {
+                "id": "id",
+                "name": "name",
+                "ingredients": "ingredients",
+                "quantity": "ingredients_quantity",
+            }
         tqdm.pandas()
         df = pd.read_csv(self.input_path_recipes)
         df = df.rename(columns={v: k for k, v in columns_map.items()})
-        # df = df[["id", "name", "ingredients", "quantity"]]
-        df = df[["id", "name", "ingredients"]]
+        df = df[["id", "name", "ingredients", "quantity"]]
+        # df = df[["id", "name", "ingredients"]]
         df["ingredients"] = df["ingredients"].apply(self.__process_ingredients)
-        # df["quantity"] = df["quantity"].apply(
-        #     lambda x: [q.strip() for q in x.split(",")]
-        # )
-        # df["wf"] = df.progress_apply(
-        #     lambda x: self.__get_wf(x["ingredients"], x["quantity"]), axis=1
-        # )
-        # df = df.sort_values(by="wf", ascending=True).reset_index(drop=True)
-        # df["category"] = df.apply(
-        #     lambda x: self.__get_recipe_category(x.name, df.shape[0]), axis=1
-        # )
+        df["quantity"] = df["quantity"].apply(
+            lambda x: [q.strip() for q in x.split(",")]
+        )
+        df["wf"] = df.progress_apply(
+            lambda x: self.__get_wf(x["ingredients"], x["quantity"]), axis=1
+        )
+        df = df.sort_values(by="wf", ascending=True).reset_index(drop=True)
+        df["category"] = df.apply(
+            lambda x: self.__get_recipe_category(x.name, df.shape[0]), axis=1
+        )
         df.to_pickle(self.path_recipes)
 
-    def generate_data(self, orders_columns_map, ingredient_columns_map, rating=False):
+    def generate_data(self, orders_columns_map, recipe_columns_map, rating=False):
+        """
+        Generate all the embeddings and datasets needed for the system
+        and save them to the default location.
+
+        :param orders_columns_map: a dictionary containing the mapping of the
+            column in the input dataset.
+        :param recipe_columns_map: a dictionary containing the mapping of
+            the column in the rec
+        :param rating: the presence or not of user ratings.
+        :return: None
+        """
         print(
-            f">> Generate ingredients embedding on column {ingredient_columns_map['ingredients']} <<"
+            f">> Generate ingredients embedding on column {recipe_columns_map['ingredients']} <<"
         )
         self.__generate_ingredients_embedding(
-            column_name=ingredient_columns_map["ingredients"]
+            column_name=recipe_columns_map["ingredients"]
         )
         print(">> DONE <<\n")
         print(">> Generate user history ratings <<")
         self.__generate_orders(columns_map=orders_columns_map, rating=rating)
         print(">> DONE <<\n")
         print(">> Generate recipes water footprint dataset <<")
-        self.__generate_recipes_wf_category(columns_map=ingredient_columns_map)
+        self.__generate_recipes_wf_category(columns_map=recipe_columns_map)
         print(">> DONE <<\n")
