@@ -1,4 +1,7 @@
-from json import load
+"""
+Module containing the core for the evaluation metrics of both
+content based and collaborative filtering algorithm.
+"""
 
 import joblib
 import pandas as pd
@@ -135,7 +138,7 @@ class Evaluation:
         :return: the RMSE of the recommendation algorithm.
         """
         recommender = CFRecommender(disable_filter_wf=True)
-        benchmark = recommender.compute_benchmark(verbose=False)
+        benchmark = recommender.get_benchmark(verbose=False)
         model_rmse = recommender.get_model_evaluation()
         return benchmark, model_rmse
 
@@ -160,10 +163,8 @@ class Evaluation:
 
 
 if __name__ == "__main__":
-    config = load_configuration()
-    dataset_name = config["data_folder"]
-    language = config["language"]
+    configuration = load_configuration()
+    dataset_name = configuration["data_folder"]
+    language = configuration["language"]
     evaluation = Evaluation(language=language)
     evaluation.compute_all_evaluation(dataset_name)
-
-

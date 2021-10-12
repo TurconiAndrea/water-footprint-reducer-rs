@@ -1,3 +1,7 @@
+"""
+Module containing command line utilities to run the recommender from terminal.
+"""
+
 import argparse
 
 from cb_recommender import CBRecommender
@@ -40,7 +44,7 @@ if __name__ == "__main__":
             config["orders_map"], config["recipes_map"], bool(config["rating"])
         )
 
-    wf_recommender = CBRecommender(filter_wf=args.filter_wf)
+    wf_recommender = CBRecommender(disable_filter_wf=args.filter_wf)
     recommendations = wf_recommender.get_user_recommendations(args.user_id)
     print("--- RSWF: a Recommender System for reducing Water Footprint ---")
     print(f"--- Recommendation for user with id {args.user_id} ---")

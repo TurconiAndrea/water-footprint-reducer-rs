@@ -1,3 +1,8 @@
+"""
+Module containing the core system of encoding and creation
+of understandable dataset for the recommender system.
+"""
+
 import joblib
 import pandas as pd
 from recipe_tagger import recipe_waterfootprint as wf
@@ -10,7 +15,20 @@ from configuration import load_configuration
 
 
 class Encoder:
+    """
+    Class that contains all the encoding and the
+    creation of data files from the dataset provided
+    by the user in the input directory and the
+    mapping specified into the configuration file.
+
+    :param language: the language of the dataset.
+    """
     def __init__(self, language):
+        """
+        Constructor method for the class.
+        It loads all the necessary path for the files
+        provided into the configuration file.
+        """
         config = load_configuration()
         self.language = language
         self.path_orders = config["path_orders"]
@@ -21,12 +39,26 @@ class Encoder:
         print(f">> Initialize encoder, language: {self.language} <<")
 
     def __process_ingredients(self, ingredients):
+        """
+        Process the provided ingredients string.
+
+        :param ingredients: a string composed by ingredients comma separated.
+        :return: a list containing the processed ingredients.
+        """
         return [
             util.process_ingredients(ing, language=self.language, stem=False)
             for ing in ingredients.split(",")
         ]
 
     def __generate_ingredients_embedding(self, column_name="ingredient"):
+        """
+        Generate the ingredients embedding TF-IDF matrix and save it
+        to a pickle file in the default folder.
+
+        :param column_name: the name of the column that contains the
+            ingredients in the recipe dataset.
+        :return: None
+        """
         recipes_df = pd.read_csv(self.input_path_recipes)[[column_name]]
         recipes_df[column_name] = recipes_df[column_name].apply(
             self.__process_ingredients
@@ -37,6 +69,16 @@ class Encoder:
         joblib.dump(matrix, self.path_embedding)
 
     def __get_user_order_quantity(self, df):
+        """
+        Reformat a dataset containing order history into a
+        dictionary containing user ratings for recipes that
+        he has ordered. The rating is computed based on
+        how many times he has ordered the recipe compared with
+        the recipes with most orders.
+
+        :param df: the dataframe containing user orders.
+        :return: a dictionary containing user recipes ratings.
+        """
         data = {"user_id": [], "item_id": [], "rating": []}
         for user in df["user_id"].unique():
             user_df = df.query(f"user_id == {user}")
@@ -50,19 +92,45 @@ class Encoder:
             data["rating"].extend(user_df["rating"])
         return data
 
-    def __get_wf(self, ing, quant):
-        while len(ing) > len(quant):
-            quant.append("5ml")
+    def __get_wf(self, ingredients, quantities):
+        """
+        Return the total water footprint of a single recipe
+        based on its ingredients and their quantities.
+
+        :param ingredients: a list containing all the ingredients.
+        :param quantities: a list containing all ingredients quantities.
+        :return: the water footprint of the recipe.
+        """
+        while len(ingredients) > len(quantities):
+            quantities.append("5ml")
         return wf.get_recipe_waterfootprint(
-            ing, quant, online_search=False, language=self.language
+            ingredients, quantities, online_search=False, language=self.language
         )
 
-    def __get_classification(self, index, total):
-        classes = ["A", "B", "C", "D", "E"]
-        trheshold = total / len(classes)
-        return classes[int(index / trheshold)]
+    def __get_recipe_category(self, index, total):
+        """
+        Return the category of a recipe based on their position
+        on the sorted dataset.
+
+        :param index: the index of the recipe in the dataset.
+        :param total: the total number of recipes in the dataset.
+        :return: the category of the recipe. (A, B, C, D, E)
+        """
+        categories = ["A", "B", "C", "D", "E"]
+        threshold = total / len(categories)
+        return categories[int(index / threshold)]
 
     def __get_dataset_reduced(self, df, min_user_orders=5, min_recipe_orders=3):
+        """
+        Return the dataset without recipes and orders that don't
+        match the restrictions. Restrictions are on minimum
+        orders made by user and minimum orders for a recipe.
+
+        :param df: the dataframe containing all the orders.
+        :param min_user_orders: the minimum number of user orders. Default is 5.
+        :param min_user_orders: the minimum number of recipe orders. Default is 3.
+        :return: a dataframe without orders that don't match guidelines.
+        """
         filter_recipe = df["item_id"].value_counts() > min_recipe_orders
         filter_recipe = filter_recipe[filter_recipe].index.tolist()
         filter_user = df["user_id"].value_counts() > min_user_orders
@@ -76,6 +144,17 @@ class Encoder:
         columns_map={"user_id": "user_id", "item_id": "item_id", "rating": "rating"},
         rating=True,
     ):
+        """
+        Generate and save to pickle file the new orders dataset, formatted
+        and reduced following the previous guidelines. If the input
+        dataframe doesn't contains yet the user ratings it will transform
+        it on a rating dataset.
+
+        :param columns_map: a dictionary containing the mapping of the
+            column in the input dataset.
+        :param rating: the presence or not of user ratings.
+        :return: None
+        """
         df = pd.read_csv(self.input_path_orders)
         df = df.rename(columns={v: k for k, v in columns_map.items()})
         if rating:
@@ -110,7 +189,7 @@ class Encoder:
         # )
         # df = df.sort_values(by="wf", ascending=True).reset_index(drop=True)
         # df["category"] = df.apply(
-        #     lambda x: self.__get_classification(x.name, df.shape[0]), axis=1
+        #     lambda x: self.__get_recipe_category(x.name, df.shape[0]), axis=1
         # )
         df.to_pickle(self.path_recipes)
 

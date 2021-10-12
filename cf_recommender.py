@@ -1,3 +1,7 @@
+"""
+Module containing the core system of the collaborative filtering recommendations system.
+"""
+
 from collections import defaultdict
 
 import os
@@ -67,9 +71,9 @@ class CFRecommender:
         """
         return Dataset.load_from_df(self.orders, self.reader)
 
-    def compute_benchmark(self, verbose=True):
+    def get_benchmark(self, verbose=True):
         """
-        Compute collaborative filtering benchmark with 7 different algorithm on the
+        Return collaborative filtering benchmark with 7 different algorithm on the
         provided data. Results are ranked and sorted by evaluating the test RSME of
         all the algorithm on cross validation.
 

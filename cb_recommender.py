@@ -1,3 +1,7 @@
+"""
+Module containing the core system of the content based recommendations system.
+"""
+
 import joblib
 import numpy as np
 import pandas as pd
