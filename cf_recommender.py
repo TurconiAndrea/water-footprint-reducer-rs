@@ -15,7 +15,7 @@ from surprise import (
     SVDpp,
     accuracy,
 )
-from surprise.model_selection import cross_validate
+from surprise.model_selection import cross_validate, train_test_split
 from tqdm import tqdm
 
 from configuration import load_configuration
@@ -67,13 +67,14 @@ class CFRecommender:
         """
         return Dataset.load_from_df(self.orders, self.reader)
 
-    def compute_benchmark(self):
+    def compute_benchmark(self, verbose=True):
         """
         Compute collaborative filtering benchmark with 7 different algorithm on the
         provided data. Results are ranked and sorted by evaluating the test RSME of
         all the algorithm on cross validation.
 
-        :return: None
+        :param verbose: possibility to print the results on the console. Default is true.
+        :return: a dataframe containing the benchmark results.
         """
         benchmark = []
         data = self.get_data()
@@ -97,7 +98,11 @@ class CFRecommender:
                 )
             )
             benchmark.append(tmp)
-        print(pd.DataFrame(benchmark).set_index("Algorithm").sort_values("test_rmse"))
+
+        results = pd.DataFrame(benchmark).set_index("Algorithm").sort_values("test_rmse")
+        if verbose:
+            print(results)
+        return results
 
     def save_cf_model(self, model_to_save):
         """
@@ -154,16 +159,21 @@ class CFRecommender:
         algo = self.get_algorithm()
         return algo.fit(train).test(test)
 
-    def get_model_evaluation(self):
+    def get_model_evaluation(self, test_size=0.25):
         """
         Compute the evaluation for the model in term of RMSE.
         Algorithm used is the one provided from the method above
         on the data. Model is evaluated on test set.
+        The default test data is 25% percent of all data.
 
+        :param test_size: percentage of test size. Default is 0.25.
         :return: the RMSE of the model.
         """
-        algo = self.create_cf_model()
-        return accuracy.rmse(algo, verbose=False)
+        data = self.get_data()
+        train, test = train_test_split(data, test_size=test_size)
+        algo = self.get_algorithm()
+        predictions = algo.fit(train).test(test)
+        return accuracy.rmse(predictions, verbose=False)
 
     def __get_all_users_top_n(self, predictions, n=10):
         """
