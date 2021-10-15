@@ -31,7 +31,7 @@ if __name__ == "__main__":
         "--no-filter-wf",
         dest="filter_wf",
         action="store_true",
-        help="default False, insert to not recommemd recipes without considering water footprint",
+        help="default False, insert to not recommend recipes without considering water footprint",
     )
     parser.set_defaults(embedding=False)
     parser.set_defaults(filter_wf=False)

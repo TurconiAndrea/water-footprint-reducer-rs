@@ -20,6 +20,7 @@ class App:
     and the possibility to configure the system with the
     two different algorithm and the water footrpint filter.
     """
+
     def __init__(self):
         """
         Constructor method for the class.

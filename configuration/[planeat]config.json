@@ -1,0 +1,16 @@
+{
+  "language": "it",
+  "rating": "False", 
+  "data_folder": "planeat",
+  "orders_map": {
+    "user_id": "user_id", 
+    "item_id": "item_id", 
+    "rating": "rating"
+  },
+  "recipes_map": {
+    "id": "id", 
+    "name": "name", 
+    "ingredients": "ingredients", 
+    "quantity": "ingredients_quantity"
+  }
+}

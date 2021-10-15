@@ -17,6 +17,10 @@ from surprise import (
     Reader,
     SlopeOne,
     SVDpp,
+    NormalPredictor,
+    KNNBasic,
+    KNNWithZScore,
+    NMF,
     accuracy,
 )
 from surprise.model_selection import cross_validate, train_test_split
@@ -142,13 +146,18 @@ class CFRecommender:
         :return: a KNNBaseline algorithm.
         """
         # CURRENT BEST: KNN BASELINE
-        # return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False) # similar with both
-        sim_options = {"name": "msd", "min_support": 5, "user_based": False}
-        return KNNBaseline(
-            k=30, sim_options=sim_options, verbose=False
-        )  # lower with planeat, lower with food.com
-        # return SVD(n_epochs=10, verbose=False, lr_all=0.005, reg_all=0.6) #lower with planeat, raise with food.com
-        # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)  #raise with planeat, lower with food.com
+        return BaselineOnly()
+        # return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False)
+        # sim_options = {"name": "msd", "min_support": 5, "user_based": False}
+        # return KNNBaseline(
+        #     k=30, sim_options=sim_options, verbose=False
+        # )
+        # return SVD(n_epochs=10, verbose=False, lr_all=0.01, reg_all=0.06)
+        # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)
+        # return KNNBasic(n_epochs=10, lr_all=0.010, n_factors=90)
+        # return KNNWithMeans(sim_options={"name":"cosine", "user_based":"False", "min_k":2})
+        # return KNNWithZScore(sim_options={"name":"msd", "user_based":"False", "min_support":5})
+        # return KNNBaseline(sim_options={"name":"msd", "user_based":"False", "min_support":5})
 
     def create_cf_model(self):
         """
@@ -238,5 +247,6 @@ class CFRecommender:
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    m = rec.create_cf_model()
-    rec.save_cf_model(m)
+    #print(rec.get_model_evaluation())
+    model = rec.create_cf_model()
+    rec.save_cf_model(model)

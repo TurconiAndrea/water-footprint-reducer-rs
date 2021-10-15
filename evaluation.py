@@ -153,8 +153,8 @@ class Evaluation:
         """
         name = name.capitalize()
         print(f">> Computing {name} Hit Ratio @10 with content based history <<")
-        hit_ratio = evaluation.get_cb_hit_ratio_score()
-        print(f">> {name} Hit Ratio @10:", round(hit_ratio, 2), "<<")
+        # hit_ratio = evaluation.get_cb_hit_ratio_score()
+        # print(f">> {name} Hit Ratio @10:", round(hit_ratio, 2), "<<")
         print("\n")
         print(f">> Computing {name} benchmark with collaborative filtering <<")
         benchmark, model_rmse = evaluation.get_cf_evaluation()

@@ -10,6 +10,7 @@ from recipe_tagger import util
 from sklearn.feature_extraction.text import TfidfVectorizer
 from stop_words import get_stop_words
 from tqdm import tqdm
+from cf_recommender import CFRecommender
 
 from configuration import load_configuration
 
@@ -187,8 +188,8 @@ class Encoder:
         tqdm.pandas()
         df = pd.read_csv(self.input_path_recipes)
         df = df.rename(columns={v: k for k, v in columns_map.items()})
+        # df = df[["id", "name", "ingredients", "quantity", "wf"]]
         df = df[["id", "name", "ingredients", "quantity"]]
-        # df = df[["id", "name", "ingredients"]]
         df["ingredients"] = df["ingredients"].apply(self.__process_ingredients)
         df["quantity"] = df["quantity"].apply(
             lambda x: [q.strip() for q in x.split(",")]
@@ -201,6 +202,16 @@ class Encoder:
             lambda x: self.__get_recipe_category(x.name, df.shape[0]), axis=1
         )
         df.to_pickle(self.path_recipes)
+
+    def __generate_collaborative_filtering_model(self):
+        """
+        Generate and save as a pickle file the collaborative filtering model.
+
+        :return: None
+        """
+        cf_recommender = CFRecommender()
+        model = cf_recommender.create_cf_model()
+        cf_recommender.save_cf_model(model_to_save=model)
 
     def generate_data(self, orders_columns_map, recipe_columns_map, rating=False):
         """
@@ -227,3 +238,10 @@ class Encoder:
         print(">> Generate recipes water footprint dataset <<")
         self.__generate_recipes_wf_category(columns_map=recipe_columns_map)
         print(">> DONE <<\n")
+        print(">> Generate collaborative filtering model <<")
+        self.__generate_collaborative_filtering_model()
+        print(">> DONE <<\n")
+
+
+if __name__ == "__main__":
+    encoder = Encoder(language="en")
