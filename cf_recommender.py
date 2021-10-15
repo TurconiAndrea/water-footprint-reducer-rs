@@ -255,6 +255,4 @@ class CFRecommender:
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    #print(rec.get_model_evaluation())
-    rec.create_cf_model(save=True)
-    #rec.save_cf_model(model)
+    print(rec.get_model_evaluation())

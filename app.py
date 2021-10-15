@@ -18,7 +18,7 @@ class App:
     Class that represents the app of the recommender system.
     It provides a Streamlit app to run on local browser
     and the possibility to configure the system with the
-    two different algorithm and the water footrpint filter.
+    two different algorithm and the water footprint filter.
     """
 
     def __init__(self):
