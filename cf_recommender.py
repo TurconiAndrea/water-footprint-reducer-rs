@@ -8,6 +8,7 @@ import os
 import joblib
 import pandas as pd
 from surprise import (
+    dump,
     SVD,
     BaselineOnly,
     CoClustering,
@@ -114,16 +115,17 @@ class CFRecommender:
             print(results)
         return results
 
-    def save_cf_model(self, model_to_save):
+    def save_cf_model(self, algo, predictions):
         """
         Save the collaborative filtering model provided as a pickle file in the
         directory provided onto the configuration file.
 
-        :param model_to_save: the model that must be saved.
+        :param algo: the model that must be saved.
+        :param predictions: the predictions for single users.
         :return: a boolean indication if the model is saved successfully or not.
         """
         print(">> Saving the model <<")
-        joblib.dump(model_to_save, self.model_path)
+        dump.dump(self.model_path, algo=algo, predictions=predictions)
         return os.path.exists(self.model_path)
 
     def load_cf_model(self):
@@ -134,7 +136,8 @@ class CFRecommender:
         :return: the collaborative filtering model.
         """
         print(">> Loading the model <<")
-        return joblib.load(self.model_path)
+        model, _ = dump.load(self.model_path)
+        return model
 
     def get_algorithm(self):
         """
@@ -159,12 +162,13 @@ class CFRecommender:
         # return KNNWithZScore(sim_options={"name":"msd", "user_based":"False", "min_support":5})
         # return KNNBaseline(sim_options={"name":"msd", "user_based":"False", "min_support":5})
 
-    def create_cf_model(self):
+    def create_cf_model(self, save=False):
         """
         Create the collaborative filtering model from the data provided, model
         is trained on train set and validated on test set. Test size is 25%.
         The algorithm used is the one provided by the previous method.
 
+        :param save: the possibility to directly save the model.
         :return: the created collaborative filtering model.
         """
         print(">> Creating the model <<")
@@ -172,7 +176,11 @@ class CFRecommender:
         train = data.build_full_trainset()
         test = train.build_anti_testset()
         algo = self.get_algorithm()
-        return algo.fit(train).test(test)
+        algo.fit(train)
+        predictions = algo.test(test)
+        if save:
+            self.save_cf_model(algo, predictions)
+        return algo, predictions
 
     def get_model_evaluation(self, test_size=0.25):
         """
@@ -225,7 +233,7 @@ class CFRecommender:
         recommendations in order to lower to user water consumptions.
 
         :param user_id: the id of the user that needs recommendations.
-        :param model: the model of the recommendations. Default is None.
+        :param model: the collaborative filtering model.
         :return: a dataframe containing the recommendations for the user.
         """
         wf = WaterFootprintUtils()
@@ -248,5 +256,5 @@ class CFRecommender:
 if __name__ == "__main__":
     rec = CFRecommender()
     #print(rec.get_model_evaluation())
-    model = rec.create_cf_model()
-    rec.save_cf_model(model)
+    rec.create_cf_model(save=True)
+    #rec.save_cf_model(model)
