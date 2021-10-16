@@ -64,5 +64,5 @@ if __name__ == "__main__":
 
     print("--- RSWF: a Recommender System for reducing Water Footprint ---")
     print(f"--- Recommendation for user with id {args.user_id} ---")
-    # print(f"--- Total wf: {recommendations['wf'].sum()}")
+    print(f"--- Total wf: {recommendations['wf'].sum()}")
     print(recommendations)

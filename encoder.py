@@ -122,7 +122,7 @@ class Encoder:
         threshold = total / len(categories)
         return categories[int(index / threshold)]
 
-    def __get_dataset_reduced(self, df, min_user_orders=50, min_recipe_orders=50):
+    def __get_dataset_reduced(self, df, min_user_orders=5, min_recipe_orders=3):
         """
         Return the dataset without recipes and orders that don't
         match the restrictions. Restrictions are on minimum
@@ -210,8 +210,7 @@ class Encoder:
         :return: None
         """
         cf_recommender = CFRecommender()
-        algo, model = cf_recommender.create_cf_model( )
-        cf_recommender.save_cf_model(algo=algo, predictions=model)
+        cf_recommender.create_cf_model(save=True)
 
     def generate_data(self, orders_columns_map, recipe_columns_map, rating=False):
         """

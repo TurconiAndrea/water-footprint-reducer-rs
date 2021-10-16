@@ -115,17 +115,16 @@ class CFRecommender:
             print(results)
         return results
 
-    def save_cf_model(self, algo, predictions):
+    def save_cf_model(self, algo):
         """
         Save the collaborative filtering model provided as a pickle file in the
         directory provided onto the configuration file.
 
         :param algo: the model that must be saved.
-        :param predictions: the predictions for single users.
         :return: a boolean indication if the model is saved successfully or not.
         """
         print(">> Saving the model <<")
-        dump.dump(self.model_path, algo=algo, predictions=predictions)
+        dump.dump(self.model_path, algo=algo)
         return os.path.exists(self.model_path)
 
     def load_cf_model(self):
@@ -136,7 +135,7 @@ class CFRecommender:
         :return: the collaborative filtering model.
         """
         print(">> Loading the model <<")
-        model, _ = dump.load(self.model_path)
+        _, model = dump.load(self.model_path)
         return model
 
     def get_algorithm(self):
@@ -148,9 +147,8 @@ class CFRecommender:
 
         :return: a KNNBaseline algorithm.
         """
-        # CURRENT BEST: KNN BASELINE
-        return BaselineOnly()
-        # return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False)
+        # return BaselineOnly()
+        return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False)
         # sim_options = {"name": "msd", "min_support": 5, "user_based": False}
         # return KNNBaseline(
         #     k=30, sim_options=sim_options, verbose=False
@@ -173,14 +171,12 @@ class CFRecommender:
         """
         print(">> Creating the model <<")
         data = self.get_data()
-        train = data.build_full_trainset()
-        test = train.build_anti_testset()
         algo = self.get_algorithm()
+        train = data.build_full_trainset()
         algo.fit(train)
-        predictions = algo.test(test)
         if save:
-            self.save_cf_model(algo, predictions)
-        return algo, predictions
+            self.save_cf_model(algo)
+        return algo
 
     def get_model_evaluation(self, test_size=0.25):
         """
@@ -198,25 +194,6 @@ class CFRecommender:
         predictions = algo.fit(train).test(test)
         return accuracy.rmse(predictions, verbose=False)
 
-    def __get_all_users_top_n(self, predictions, n=10):
-        """
-        Return the top-N recommendation for each user from a set of predictions.
-        If the n param is negative, all the recommendation are returned.
-
-        :param predictions: the list of predictions, as returned by the test
-        method of an algorithm.
-        :param n: the number of recommendation to output for each user. Default is 10.
-        :return: a dict where keys are user ids and values are lists of tuples:
-        [(raw item id, rating estimation), ...] of size n.
-        """
-        top_n = defaultdict(list)
-        for uid, iid, true_r, est, _ in predictions:
-            top_n[uid].append((iid, est))
-        for uid, user_ratings in top_n.items():
-            user_ratings.sort(key=lambda x: x[1], reverse=True)
-            top_n[uid] = user_ratings[:n] if n >= 0 else user_ratings
-        return top_n
-
     def __get_recipe_from_id(self, recipe_id):
         """
         Return the recipe row from the dataframe based on the recipe id.
@@ -225,6 +202,20 @@ class CFRecommender:
         :return: a dataframe row containing the recipe at the provided id.
         """
         return self.recipes.query(f"id == {recipe_id}")[["name", "wf", "category"]]
+
+    def __get_prediction(self, user_id, recipe_id, model):
+        """
+        Return a tuple composed by the id of the recipe and the
+        predictions based on the id of the user.
+
+        :param user_id: the id of the user.
+        :param recipe_id: the id of the recipe.
+        :param model: the model used to recommend.
+        :return: a tuple composed by id of recipe and rating (from 0 to 5)
+            (raw item id, rating estimation)
+        """
+        prediction = model.predict(uid=user_id, iid=recipe_id)
+        return recipe_id, prediction.est
 
     def get_user_recommendations(self, user_id, model=None):
         """
@@ -238,11 +229,12 @@ class CFRecommender:
         """
         wf = WaterFootprintUtils()
         model = model if model is not None else self.load_cf_model()
-        n_recommendations = -1 if not self.disable_filter_wf else self.n_recommendations
-        recommendations = self.__get_all_users_top_n(model, n=n_recommendations)[
-            user_id
-        ]
-        recommendations = [recipe_id for recipe_id, _ in recommendations]
+        recipes = self.orders["id"].unique()
+        orders = self.orders.query(f"user_id == {user_id}")["id"].tolist()
+        not_orders = list(set(recipes) - set(orders))
+        recommendations = [self.__get_prediction(user_id, recipe_id, model) for recipe_id in not_orders]
+        recommendations = sorted(recommendations, key=lambda tup: tup[1])
+        recommendations = [recipe_id for recipe_id, _ in recommendations][:500]
         recommendations = (
             wf.get_recommendations_correct(recommendations, user_id, "cf")
             if not self.disable_filter_wf
