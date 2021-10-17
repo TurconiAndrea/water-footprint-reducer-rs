@@ -7,6 +7,7 @@ from collections import defaultdict
 import os
 import joblib
 import pandas as pd
+import random
 from surprise import (
     dump,
     SVD,
@@ -89,12 +90,12 @@ class CFRecommender:
         data = self.get_data()
         algorithms = [
             BaselineOnly(verbose=False),
-            SVD(verbose=False),
-            SVDpp(verbose=False),
-            SlopeOne(),
-            KNNWithMeans(verbose=False),
-            KNNBaseline(verbose=False),
-            CoClustering(verbose=False),
+            SVD(n_epochs=5, verbose=False, lr_all=0.01, reg_all=0.06),
+            KNNBasic(n_epochs=10, lr_all=0.010, n_factors=90, verbose=False),
+            KNNWithMeans(sim_options={"name": "cosine", "user_based": "False", "min_k": 2}, verbose=False),
+            KNNWithZScore(sim_options={"name": "msd", "user_based": "False", "min_support": 5}, verbose=False),
+            KNNBaseline(sim_options={"name": "msd", "user_based": "False", "min_support": 5}, verbose=False),
+            CoClustering(verbose=False)
         ]
         for algorithm in tqdm(algorithms, desc="Computing benchmark"):
             results = cross_validate(
@@ -147,18 +148,9 @@ class CFRecommender:
 
         :return: a KNNBaseline algorithm.
         """
-        # return BaselineOnly()
-        return BaselineOnly(bsl_options={'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}, verbose=False)
-        # sim_options = {"name": "msd", "min_support": 5, "user_based": False}
-        # return KNNBaseline(
-        #     k=30, sim_options=sim_options, verbose=False
-        # )
-        # return SVD(n_epochs=10, verbose=False, lr_all=0.01, reg_all=0.06)
-        # return SVDpp(verbose=False, lr_all=0.01, reg_all=0.5)
-        # return KNNBasic(n_epochs=10, lr_all=0.010, n_factors=90)
-        # return KNNWithMeans(sim_options={"name":"cosine", "user_based":"False", "min_k":2})
-        # return KNNWithZScore(sim_options={"name":"msd", "user_based":"False", "min_support":5})
-        # return KNNBaseline(sim_options={"name":"msd", "user_based":"False", "min_support":5})
+        options = {'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}
+        # return BaselineOnly(bsl_options=options, verbose=False)
+        return SVD()
 
     def create_cf_model(self, save=False):
         """
@@ -217,6 +209,32 @@ class CFRecommender:
         prediction = model.predict(uid=user_id, iid=recipe_id)
         return recipe_id, prediction.est
 
+    def get_cf_hit_ratio(self, model=None):
+        """
+        Computes the HitRatio@10 score of the collaborative
+        filtering algorithm on all users present into the dataset.
+        If the test is in the top 10 element recommended to the
+        user, it is considered as an hit. The HitRatio is the
+        difference between all hits and all users.
+
+        :return: the HitRatio@10 score.
+        """
+        model = model if model is not None else self.load_cf_model()
+        users = self.orders["user_id"].unique()
+        hit = 0
+        for user_id in tqdm(users):
+            all_recipes = self.orders["id"].unique()
+            user_orders = self.orders.query(f"user_id == {user_id}")
+            test_recipe = user_orders.loc[(user_orders["rating"].idxmax())]["id"]
+            user_recipes = user_orders["id"].unique()
+            random_recipes = random.sample(list(set(all_recipes) - set(user_recipes)), 99)
+            random_recipes.append(test_recipe)
+            recommendations = [self.__get_prediction(user_id, recipe_id, model) for recipe_id in random_recipes]
+            recommendations = sorted(recommendations, key=lambda tup: tup[1], reverse=True)[:10]
+            recommendations = [recipe_id for recipe_id, _ in recommendations]
+            hit = hit + 1 if test_recipe in recommendations else hit + 0
+        return hit/len(users)
+
     def get_user_recommendations(self, user_id, model=None):
         """
         Get the best n recommendations for the provided user id.
@@ -247,4 +265,6 @@ class CFRecommender:
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    print(rec.get_model_evaluation())
+    # mod = rec.create_cf_model()
+    # print(rec.get_cf_hit_ratio(model=mod))
+

@@ -140,7 +140,8 @@ class Evaluation:
         recommender = CFRecommender(disable_filter_wf=True)
         benchmark = recommender.get_benchmark(verbose=False)
         model_rmse = recommender.get_model_evaluation()
-        return benchmark, model_rmse
+        hit_ratio = recommender.get_cf_hit_ratio()
+        return benchmark, model_rmse, hit_ratio
 
     def compute_all_evaluation(self, name):
         """
@@ -153,18 +154,20 @@ class Evaluation:
         """
         name = name.capitalize()
         print(f">> Computing {name} Hit Ratio @10 with content based history <<")
-        # hit_ratio = evaluation.get_cb_hit_ratio_score()
-        # print(f">> {name} Hit Ratio @10:", round(hit_ratio, 2), "<<")
+        hit_ratio = evaluation.get_cb_hit_ratio_score()
+        print(f">> {name} Hit Ratio @10:", round(hit_ratio, 2), "<<")
         print("\n")
         print(f">> Computing {name} benchmark with collaborative filtering <<")
-        benchmark, model_rmse = evaluation.get_cf_evaluation()
+        benchmark, model_rmse, cf_hit_ratio = evaluation.get_cf_evaluation()
         print(benchmark)
         print(f">> The algorithm used has the following RMSE: {model_rmse}")
+        print(f">> Computing {name} Hit Ratio @10 with collaborative filtering <<")
+        print(f">> {name} Hit Ratio @10:", round(cf_hit_ratio, 2), "<<")
 
 
 if __name__ == "__main__":
     configuration = load_configuration()
     dataset_name = configuration["data_folder"]
-    language = configuration["language"]
-    evaluation = Evaluation(language=language)
+    conf_language = configuration["language"]
+    evaluation = Evaluation(language=conf_language)
     evaluation.compute_all_evaluation(dataset_name)
