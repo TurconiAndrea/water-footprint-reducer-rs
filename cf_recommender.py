@@ -148,9 +148,8 @@ class CFRecommender:
 
         :return: a KNNBaseline algorithm.
         """
-        options = {'method': 'als', 'n_epochs': 5, 'reg_u': 12, 'reg_i': 5}
-        # return BaselineOnly(bsl_options=options, verbose=False)
-        return SVD()
+        options = {"name": "msd", "user_based": "False", "min_support": 5}
+        return KNNBaseline(sim_options=options, verbose=False)
 
     def create_cf_model(self, save=False):
         """
@@ -225,7 +224,8 @@ class CFRecommender:
         for user_id in tqdm(users):
             all_recipes = self.orders["id"].unique()
             user_orders = self.orders.query(f"user_id == {user_id}")
-            test_recipe = user_orders.loc[(user_orders["rating"].idxmax())]["id"]
+            # test_recipe = user_orders.loc[(user_orders["rating"].idxmax())]["id"]
+            test_recipe = user_orders.tail(1)["id"].tolist()[0]
             user_recipes = user_orders["id"].unique()
             random_recipes = random.sample(list(set(all_recipes) - set(user_recipes)), 99)
             random_recipes.append(test_recipe)
@@ -233,7 +233,7 @@ class CFRecommender:
             recommendations = sorted(recommendations, key=lambda tup: tup[1], reverse=True)[:10]
             recommendations = [recipe_id for recipe_id, _ in recommendations]
             hit = hit + 1 if test_recipe in recommendations else hit + 0
-        return hit/len(users)
+        return round(hit/len(users), 2)
 
     def get_user_recommendations(self, user_id, model=None):
         """
@@ -265,6 +265,6 @@ class CFRecommender:
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    # mod = rec.create_cf_model()
-    # print(rec.get_cf_hit_ratio(model=mod))
+    mod = rec.create_cf_model(save=True)
+    print(rec.get_cf_hit_ratio(model=mod))
 
