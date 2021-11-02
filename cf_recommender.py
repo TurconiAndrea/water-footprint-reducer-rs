@@ -148,7 +148,7 @@ class CFRecommender:
 
         :return: a KNNBaseline algorithm.
         """
-        options = {"name": "msd", "user_based": "False", "min_support": 5}
+        options = {"name": "pearson_baseline", "user_based": "False", "min_support": 5}
         return KNNBaseline(sim_options=options, verbose=False)
 
     def create_cf_model(self, save=False):
@@ -265,6 +265,7 @@ class CFRecommender:
 
 if __name__ == "__main__":
     rec = CFRecommender()
-    mod = rec.create_cf_model(save=True)
+    mod = rec.create_cf_model(save=False)
     print(rec.get_cf_hit_ratio(model=mod))
+    print(rec.get_model_evaluation())
 
