@@ -12,7 +12,7 @@ Data can be downloaded here: https://www.kaggle.com/turconiandrea/water-footprin
 1. Clone the application in a local folder
 
 2. Download the dataset from the following links 
-   * embbedding (ready to use): 
+   * embbedding (ready to use): [embedding-data folder](https://www.kaggle.com/turconiandrea/water-footprint-recommender-system-data)
 
 3. Paste the downloaded folder into ` data/ ` folder
 
