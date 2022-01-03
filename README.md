@@ -6,6 +6,8 @@ This repository contains a recommender system that takes into account water foot
 It provides a command line utility to explore the recommender system from terminal, and also, provides a Streamlit application to explore and configure all the possibility inserted into the recommender system. 
 Before running the system it is possible to configure it via the application, you can choose around a content based or a collaborative filtering algorithm, the number of recommendations and the choice to activate or deactivate the water footprint filter. 
 
+Data can be downloaded here: https://www.kaggle.com/turconiandrea/water-footprint-recommender-system-data
+
 ## Setup
 1. Clone the application in a local folder
 
