@@ -208,7 +208,7 @@ class CFRecommender:
         prediction = model.predict(uid=user_id, iid=recipe_id)
         return recipe_id, prediction.est
 
-    def get_cf_hit_ratio(self, model=None):
+    def get_cf_hit_ratio(self, model=None, filter_wf=False):
         """
         Computes the HitRatio@10 score of the collaborative
         filtering algorithm on all users present into the dataset.
@@ -218,6 +218,7 @@ class CFRecommender:
 
         :return: the HitRatio@10 score.
         """
+        wf = WaterFootprintUtils()
         model = model if model is not None else self.load_cf_model()
         users = self.orders["user_id"].unique()
         hit = 0
@@ -230,9 +231,14 @@ class CFRecommender:
             random_recipes = random.sample(list(set(all_recipes) - set(user_recipes)), 99)
             random_recipes.append(test_recipe)
             recommendations = [self.__get_prediction(user_id, recipe_id, model) for recipe_id in random_recipes]
-            recommendations = sorted(recommendations, key=lambda tup: tup[1], reverse=True)[:10]
+            recommendations = sorted(recommendations, key=lambda tup: tup[1], reverse=True)
             recommendations = [recipe_id for recipe_id, _ in recommendations]
-            hit = hit + 1 if test_recipe in recommendations else hit + 0
+            recommendations = (
+                wf.get_recommendations_correct(recommendations, user_id, "cf")
+                if filter_wf
+                else recommendations
+            )
+            hit = hit + 1 if test_recipe in recommendations[:10] else hit + 0
         return round(hit/len(users), 2)
 
     def get_user_recommendations(self, user_id, model=None):
@@ -266,6 +272,5 @@ class CFRecommender:
 if __name__ == "__main__":
     rec = CFRecommender()
     mod = rec.create_cf_model(save=False)
-    print(rec.get_cf_hit_ratio(model=mod))
-    print(rec.get_model_evaluation())
+    print(rec.get_cf_hit_ratio(model=mod, filter_wf=True))
 

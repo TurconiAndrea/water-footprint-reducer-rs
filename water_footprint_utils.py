@@ -21,6 +21,7 @@ class WaterFootprintUtils:
         config = load_configuration()
         self.orders = pd.read_pickle(config["path_orders"])
         self.recipes = pd.read_pickle(config["path_recipes"])
+        self.user_scores = pd.read_pickle(config["path_user_scores"])
         self.classes = ["A", "B", "C", "D", "E"]
 
     def __get_recipe_class_to_recommend(self, user_score):
@@ -37,6 +38,7 @@ class WaterFootprintUtils:
         usr_cls_1 = usr_cls - 1 if usr_cls - 1 >= 0 else 0
         usr_cls_2 = usr_cls - 2 if usr_cls - 1 >= 1 else usr_cls
         return sorted({"A", self.classes[usr_cls_1], self.classes[usr_cls_2]})
+        
 
     def __get_recipe_class(self, recipe_id):
         """
@@ -48,7 +50,7 @@ class WaterFootprintUtils:
         category = self.recipes.query(f"id == {recipe_id}")["category"].tolist()
         return category[0] if category else None
 
-    def __get_user_score(self, user_id, weight=1.3):
+    def __get_user_score(self, user_id):
         """
         Get the score of the user based on his reviews.
         User orders are summed and weighted based on their
@@ -56,31 +58,10 @@ class WaterFootprintUtils:
         is found.
 
         :param user_id: the id of the user.
-        :param weight: the weight for the recipe categories.
         :return: the user score.
         """
-        user_df = self.orders.query(f"user_id == {user_id}").copy()
-        user_df["category"] = user_df["id"].apply(lambda x: self.__get_recipe_class(x))
-        orders = user_df.groupby(by="category").count()["id"].to_dict()
-        total = sum(orders[k] for k in orders)
-        orders = {k: round((orders[k] / total) * 100, 2) for k in orders}
-        e_percentage = orders["E"] if "E" in orders else 0
-        d_percentage = orders["D"] if "D" in orders else 0
-        a_percentage = orders["A"] if "A" in orders else 0
-        b_percentage = orders["B"] if "B" in orders else 0
-        diff = (a_percentage + b_percentage) - (e_percentage + d_percentage) * weight
-        user_cls = "D"
-        if -5 <= diff <= 5:
-            user_cls = "C"
-        elif 5 < diff <= 25:
-            user_cls = "B"
-        elif diff > 25:
-            user_cls = "A"
-        elif -25 <= diff < -5:
-            user_cls = "D"
-        elif diff < -25:
-            user_cls = "E"
-        return user_cls
+        score = self.user_scores.query(f"user_id == {user_id}")["score"].tolist()
+        return score[0] if score else None
 
     def __get_recipe_category(self, recipe_id):
         """

@@ -7,7 +7,10 @@ import joblib
 import pandas as pd
 from recipe_tagger import recipe_waterfootprint as wf
 from recipe_tagger import util
+from sklearn import cluster
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
 from stop_words import get_stop_words
 from tqdm import tqdm
 from cf_recommender import CFRecommender
@@ -36,6 +39,7 @@ class Encoder:
         self.path_orders = config["path_orders"]
         self.path_recipes = config["path_recipes"]
         self.path_embedding = config["path_embedding"]
+        self.path_user_scores = config["path_user_scores"]
         self.input_path_orders = config["input_path_orders"]
         self.input_path_recipes = config["input_path_recipes"]
         print(f">> Initialize encoder, language: {self.language} <<")
@@ -172,7 +176,7 @@ class Encoder:
         """
         Generate and save to pickle file the new recipes dataset, with
         formatted ingredients and quantities, with every water footprint
-        and category of single recipes,
+        and category of single recipes.
 
         :param columns_map: a dictionary containing the mapping of the
             column in the input dataset.
@@ -212,6 +216,49 @@ class Encoder:
         cf_recommender = CFRecommender()
         cf_recommender.create_cf_model(save=True)
 
+    def __generate_user_score_data(self):
+        """
+        Generate and save to pickle file the score of the users.
+        The embedding contains the id of the user with the associated 
+        score provided by a KMeans clustering algorithm on normalized
+        and weighted user data history orders. 
+
+        :return None:
+        """
+        orders = pd.read_pickle(self.path_orders)
+        recipes = pd.read_pickle(self.path_recipes)
+        df = pd.merge(orders, recipes, on="id")[["user_id", "id", "rating", "category"]]
+        categories = ['A', 'B', 'C', 'D', 'E']
+        weight = {'A': 0.5, 'B': 1, 'C': 1, 'D': 1, 'E': 1}
+        data = {"user_id": [], 'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
+        for user in df.user_id.unique():
+            u_df = df.query(f"user_id == {user}")
+            mean_cat = u_df.groupby('category')['rating'].mean().round(2).to_dict()
+            count_cat = u_df.groupby('category')['rating'].count().round(2).to_dict()
+            mean_x_count = {k: round(mean_cat[k]*count_cat[k]*weight[k], 2) for k in mean_cat}
+            data["user_id"].append(user)
+            for cat in categories:
+                d = mean_x_count[cat] if cat in mean_x_count else 0
+                data[cat].append(d)
+        df = pd.DataFrame(data)
+        data = df.drop(columns=['user_id'])
+        X = data.transpose()
+        scaler = MinMaxScaler()
+        scaler.fit(X)
+        X = scaler.transform(X).transpose()
+        kmeans = KMeans(
+            n_clusters=5, init="k-means++",
+            n_init=10,
+            tol=1e-04, random_state=42
+        )
+        kmeans.fit(X)
+        clusters=pd.DataFrame(X,columns=data.columns)
+        clusters['score']=kmeans.labels_
+        clusters['score']=clusters['score'].apply(lambda x: ['E', 'B', 'C', 'A', 'D'][x])
+        df["score"] = clusters["score"]
+        df = df[["user_id", "score"]]
+        df.to_pickle(self.path_user_scores)
+
     def generate_data(self, orders_columns_map, recipe_columns_map, rating=False):
         """
         Generate all the embeddings and datasets needed for the system
@@ -240,7 +287,9 @@ class Encoder:
         print(">> Generate collaborative filtering model <<")
         self.__generate_collaborative_filtering_model()
         print(">> DONE <<\n")
-
+        print(">> Generate user score clustering <<")
+        self.__generate_user_score_data()
+        print(">> DONE <<\n")
 
 if __name__ == "__main__":
     encoder = Encoder(language="en")

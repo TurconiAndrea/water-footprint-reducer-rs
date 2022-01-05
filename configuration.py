@@ -10,6 +10,7 @@ path_orders = "reviews.pkl"
 path_recipes = "recipes.pkl"
 path_cf_model = "model.pkl"
 path_embedding = "ingredients.pkl"
+path_user_scores = "users_scores.pkl"
 input_path_recipes = "recipes.csv"
 input_path_orders = "orders.csv"
 
@@ -37,6 +38,7 @@ def load_configuration():
     data["path_recipes"] = f"data/{folder}/{path_recipes}"
     data["path_embedding"] = f"data/{folder}/{path_embedding}"
     data["path_cf_model"] = f"data/{folder}/{path_cf_model}"
+    data["path_user_scores"] = f"data/{folder}/{path_user_scores}"
     data["input_path_recipes"] = f"input/{folder}/{input_path_recipes}"
     data["input_path_orders"] = f"input/{folder}/{input_path_orders}"
     return data
