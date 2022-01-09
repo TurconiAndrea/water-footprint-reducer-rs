@@ -208,6 +208,34 @@ class CFRecommender:
         prediction = model.predict(uid=user_id, iid=recipe_id)
         return recipe_id, prediction.est
 
+    def __get_recipes_average_wf(self, recipes):
+        """
+        Return the average water footprint based on the recipes
+        id provided in input. 
+
+        :recipes: a list containg the recipes id.
+        :return: an int indicating the average water footprint of the recipes
+        """
+        summon = 0
+        for id in recipes:
+            ls = self.recipes.query(f"id == {id}")["wf"].to_list()
+            summon = summon + ls[0] if ls else summon
+        return summon / len(recipes)
+
+    def __get_recipes_sum_wf(self, recipes):
+        """
+        Return the sum water footprint based on the recipes
+        id provided in input. 
+
+        :recipes: a list containg the recipes id.
+        :return: an int indicating the average water footprint of the recipes
+        """
+        summon = 0
+        for id in recipes:
+            ls = self.recipes.query(f"id == {id}")["wf"].to_list()
+            summon = summon + ls[0] if ls else summon
+        return summon
+
     def get_cf_hit_ratio(self, model=None, filter_wf=False):
         """
         Computes the HitRatio@10 score of the collaborative
@@ -222,6 +250,7 @@ class CFRecommender:
         model = model if model is not None else self.load_cf_model()
         users = self.orders["user_id"].unique()
         hit = 0
+        wfs = []
         for user_id in tqdm(users):
             all_recipes = self.orders["id"].unique()
             user_orders = self.orders.query(f"user_id == {user_id}")
@@ -238,7 +267,10 @@ class CFRecommender:
                 if filter_wf
                 else recommendations
             )
-            hit = hit + 1 if test_recipe in recommendations[:10] else hit + 0
+            recommendations = recommendations[:10]
+            wfs.append(self.__get_recipes_sum_wf(recommendations))
+            hit = hit + 1 if test_recipe in recommendations else hit + 0
+        print(sum(wfs)/len(wfs))
         return round(hit/len(users), 2)
 
     def get_user_recommendations(self, user_id, model=None):
@@ -272,5 +304,7 @@ class CFRecommender:
 if __name__ == "__main__":
     rec = CFRecommender()
     mod = rec.create_cf_model(save=False)
+    print(rec.get_cf_hit_ratio(model=mod, filter_wf=False))
     print(rec.get_cf_hit_ratio(model=mod, filter_wf=True))
+    
 

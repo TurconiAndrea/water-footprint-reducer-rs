@@ -229,7 +229,7 @@ class Encoder:
         recipes = pd.read_pickle(self.path_recipes)
         df = pd.merge(orders, recipes, on="id")[["user_id", "id", "rating", "category"]]
         categories = ['A', 'B', 'C', 'D', 'E']
-        weight = {'A': 0.5, 'B': 1, 'C': 1, 'D': 1, 'E': 1}
+        weight = {'A': 1, 'B': 1, 'C': 1, 'D': 1, 'E': 1}
         data = {"user_id": [], 'A': [], 'B': [], 'C': [], 'D': [], 'E': []}
         for user in df.user_id.unique():
             u_df = df.query(f"user_id == {user}")
@@ -254,7 +254,7 @@ class Encoder:
         kmeans.fit(X)
         clusters=pd.DataFrame(X,columns=data.columns)
         clusters['score']=kmeans.labels_
-        clusters['score']=clusters['score'].apply(lambda x: ['E', 'B', 'C', 'A', 'D'][x])
+        clusters['score']=clusters['score'].apply(lambda x: ['D', 'E', 'A', 'C', 'B'][x])
         df["score"] = clusters["score"]
         df = df[["user_id", "score"]]
         df.to_pickle(self.path_user_scores)
@@ -293,3 +293,4 @@ class Encoder:
 
 if __name__ == "__main__":
     encoder = Encoder(language="en")
+    encoder.generate_data()

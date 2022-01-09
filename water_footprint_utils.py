@@ -38,7 +38,7 @@ class WaterFootprintUtils:
         usr_cls_1 = usr_cls - 1 if usr_cls - 1 >= 0 else 0
         usr_cls_2 = usr_cls - 2 if usr_cls - 1 >= 1 else usr_cls
         return sorted({"A", self.classes[usr_cls_1], self.classes[usr_cls_2]})
-        
+        #return sorted({ self.classes[usr_cls_1], self.classes[usr_cls_2]})
 
     def __get_recipe_class(self, recipe_id):
         """
