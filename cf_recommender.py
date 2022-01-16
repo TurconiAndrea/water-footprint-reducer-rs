@@ -142,7 +142,7 @@ class CFRecommender:
     def get_algorithm(self):
         """
         Instantiate the collaborative filtering algorithm used with
-        fine tuned parameters. Algorithm used is kNN Baseline with
+        fine-tuned parameters. Algorithm used is kNN Baseline with
         Mean Squared Difference for measuring similarity, item-item
         similarity and a minimum number of users.
 

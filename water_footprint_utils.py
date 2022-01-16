@@ -27,18 +27,13 @@ class WaterFootprintUtils:
     def __get_recipe_class_to_recommend(self, user_score):
         """
         Get the recipe categories to recommend based on the user score.
-        The category are always the two before the user score and
-        recipes with category equals to A.
+        The categories are lower or equal than the user score.
 
         :param user_score: the score of the user.
         :return: a list containing the categories of the recipe to
             recommend.
         """
-        usr_cls = self.classes.index(user_score)
-        usr_cls_1 = usr_cls - 1 if usr_cls - 1 >= 0 else 0
-        usr_cls_2 = usr_cls - 2 if usr_cls - 1 >= 1 else usr_cls
-        return sorted({"A", self.classes[usr_cls_1], self.classes[usr_cls_2]})
-        #return sorted({ self.classes[usr_cls_1], self.classes[usr_cls_2]})
+        return self.classes[:self.classes.index(user_score)+1]
 
     def __get_recipe_class(self, recipe_id):
         """
