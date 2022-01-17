@@ -2,12 +2,10 @@
 Module containing the core system of the collaborative filtering recommendations system.
 """
 
-from collections import defaultdict
-
 import os
-import joblib
-import pandas as pd
 import random
+
+import pandas as pd
 from surprise import (
     dump,
     SVD,
@@ -17,12 +15,8 @@ from surprise import (
     KNNWithMeans,
     KNNBaseline,
     Reader,
-    SlopeOne,
-    SVDpp,
-    NormalPredictor,
     KNNBasic,
     KNNWithZScore,
-    NMF,
     accuracy,
 )
 from surprise.model_selection import cross_validate, train_test_split
@@ -35,9 +29,9 @@ from water_footprint_utils import WaterFootprintUtils
 class CFRecommender:
     """
     Class that represents the collaborative filtering algorithm.
-    The dataset are the ones provided onto the configuration file.
+    The datasets are the ones provided onto the configuration file.
     The algorithm used is a KNN Baseline from Surprise toolkit
-    fine tuned with different parameters.
+    fine-tuned with different parameters.
     This class also provides a benchmark that compares 7 different
     algorithms and an evaluation method for the chosen algorithm.
 
@@ -171,7 +165,7 @@ class CFRecommender:
 
     def get_model_evaluation(self, test_size=0.25):
         """
-        Compute the evaluation for the model in term of RMSE.
+        Compute the evaluation for the model in terms of RMSE.
         Algorithm used is the one provided from the method above
         on the data. Model is evaluated on test set.
         The default test data is 25% percent of all data.
@@ -224,10 +218,10 @@ class CFRecommender:
 
     def __get_recipes_sum_wf(self, recipes):
         """
-        Return the sum water footprint based on the recipes
+        Return the sum water footprint based on the recipes'
         id provided in input. 
 
-        :recipes: a list containg the recipes id.
+        :recipes: a list containing the recipes' id.
         :return: an int indicating the average water footprint of the recipes
         """
         summon = 0
@@ -241,7 +235,7 @@ class CFRecommender:
         Computes the HitRatio@10 score of the collaborative
         filtering algorithm on all users present into the dataset.
         If the test is in the top 10 element recommended to the
-        user, it is considered as an hit. The HitRatio is the
+        user, it is considered as a hit. The HitRatio is the
         difference between all hits and all users.
 
         :return: the HitRatio@10 score.
@@ -254,7 +248,6 @@ class CFRecommender:
         for user_id in tqdm(users):
             all_recipes = self.orders["id"].unique()
             user_orders = self.orders.query(f"user_id == {user_id}")
-            # test_recipe = user_orders.loc[(user_orders["rating"].idxmax())]["id"]
             test_recipe = user_orders.tail(1)["id"].tolist()[0]
             user_recipes = user_orders["id"].unique()
             random_recipes = random.sample(list(set(all_recipes) - set(user_recipes)), 99)
