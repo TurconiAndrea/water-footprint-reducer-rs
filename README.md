@@ -15,9 +15,10 @@ Data can be downloaded here: https://www.kaggle.com/turconiandrea/water-footprin
    * embbedding (ready to use): [embedding-data folder](https://www.kaggle.com/turconiandrea/water-footprint-recommender-system-data)
 
 3. Paste the downloaded folder into ` data/ ` folder
+4. Choose the configuration file: under the ` configuration folder `, it is possible to choose from which data run the system (Planeat.eco or Food.com). In order to change the data it is necessary to rename the selected file as ` config.json `. From the ` config.json ` file the system will gather all the data it needs without any further configuration. 
 
 ## Execution 
-* In order to run the streamlit application:
+* In order to run the streamlit web application:
 ```bash
 streamlit run app.py
 ```
